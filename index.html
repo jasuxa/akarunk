@@ -1,0 +1,1465 @@
+    <script>
+        function showSection(sectionId) {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => section.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+        }
+        
+        // Глобальні змінні
+        let sortingInProgress = false;
+        let isPaused = false;
+        let currentSpeed = 500;
+        let currentArraySize = 10;
+        let comparisons = 0;
+        let swaps = 0;
+        let startTime = 0;
+        
+        // Візуалізація
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        function generateArray(size) {
+            const container = document.getElementById('array-container');
+            container.innerHTML = '';
+            const values = [];
+            
+            for (let i = 0; i < size; i++) {
+                const value = Math.floor(Math.random() * 10) + 1;
+                values.push(value);
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.height = value * 10 + 'px';
+                bar.textContent = value;
+                container.appendChild(bar);
+            }
+            
+            return values;
+        }
+        
+        function updateArraySize() {
+            currentArraySize = document.getElementById('array-size').value;
+            document.getElementById('size-value').textContent = currentArraySize;
+            if (!sortingInProgress) {
+                generateArray(currentArraySize);
+            }
+        }
+        
+        function updateSpeed() {
+            currentSpeed = document.getElementById('speed').value;
+            document.getElementById('speed-value').textContent = currentSpeed;
+        }
+        
+        function generateRandomArray() {
+            if (!sortingInProgress) {
+                generateArray(currentArraySize);
+                resetStats();
+            }
+        }
+        
+        function generateReversedArray() {
+            if (!sortingInProgress) {
+                const container = document.getElementById('array-container');
+                container.innerHTML = '';
+                for (let i = currentArraySize; i > 0; i--) {
+                    const bar = document.createElement('div');
+                    bar.className = 'bar';
+                    bar.style.height = i * 10 + 'px';
+                    bar.textContent = i;
+                    container.appendChild(bar);
+                }
+                resetStats();
+            }
+        }
+        
+        function generateNearlySorted() {
+            if (!sortingInProgress) {
+                const container = document.getElementById('array-container');
+                container.innerHTML = '';
+                const values = [];
+                for (let i = 1; i <= currentArraySize; i++) {
+                    values.push(i);
+                }
+                // Робимо кілька випадкових обмінів
+                for (let i = 0; i < 2; i++) {
+                    const idx1 = Math.floor(Math.random() * currentArraySize);
+                    const idx2 = Math.floor(Math.random() * currentArraySize);
+                    [values[idx1], values[idx2]] = [values[idx2], values[idx1]];
+                }
+                
+                values.forEach(value => {
+                    const bar = document.createElement('div');
+                    bar.className = 'bar';
+                    bar.style.height = value * 10 + 'px';
+                    bar.textContent = value;
+                    container.appendChild(bar);
+                });
+                resetStats();
+            }
+        }
+        
+        function resetStats() {
+            comparisons = 0;
+            swaps = 0;
+            document.getElementById('comparisons').textContent = '0';
+            document.getElementById('swaps').textContent = '0';
+            document.getElementById('time').textContent = '0';
+        }
+        
+        function updateStats() {
+            document.getElementById('comparisons').textContent = comparisons;
+            document.getElementById('swaps').textContent = swaps;
+            const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+            document.getElementById('time').textContent = elapsed;
+        }
+        
+        function getArrayValues() {
+            const bars = document.querySelectorAll('.bar');
+            return Array.from(bars).map(bar => parseInt(bar.textContent));
+        }
+        
+        function updateBars(values) {
+            const bars = document.querySelectorAll('.bar');
+            bars.forEach((bar, index) => {
+                bar.style.height = values[index] * 10 + 'px';
+                bar.textContent = values[index];
+            });
+        }
+        
+        async function bubbleSortVisualization() {
+            const values = getArrayValues();
+            const bars = document.querySelectorAll('.bar');
+            const n = values.length;
+            
+            for (let i = 0; i < n && sortingInProgress; i++) {
+                for (let j = 0; j < n - i - 1 && sortingInProgress; j++) {
+                    while (isPaused && sortingInProgress) {
+                        await sleep(100);
+                    }
+                    
+                    bars[j].classList.add('comparing');
+                    bars[j + 1].classList.add('comparing');
+                    comparisons++;
+                    updateStats();
+                    
+                    await sleep(currentSpeed);
+                    
+                    if (values[j] > values[j + 1]) {
+                        [values[j], values[j + 1]] = [values[j + 1], values[j]];
+                        updateBars(values);
+                        swaps++;
+                        updateStats();
+                    }
+                    
+                    bars[j].classList.remove('comparing');
+                    bars[j + 1].classList.remove('comparing');
+                }
+                bars[n - i - 1].classList.add('sorted');
+            }
+            
+            if (sortingInProgress) {
+                document.getElementById('status').textContent = 'Сортування завершено!';
+                sortingInProgress = false;
+            }
+        }
+        
+        async function selectionSortVisualization() {
+            const values = getArrayValues();
+            const bars = document.querySelectorAll('.bar');
+            const n = values.length;
+            
+            for (let i = 0; i < n && sortingInProgress; i++) {
+                let minIdx = i;
+                bars[i].classList.add('comparing');
+                
+                for (let j = i + 1; j < n && sortingInProgress; j++) {
+                    while (isPaused && sortingInProgress) {
+                        await sleep(100);
+                    }
+                    
+                    bars[j].classList.add('comparing');
+                    comparisons++;
+                    updateStats();
+                    await sleep(currentSpeed);
+                    
+                    if (values[j] < values[minIdx]) {
+                        if (minIdx !== i) bars[minIdx].classList.remove('comparing');
+                        minIdx = j;
+                    } else {
+                        bars[j].classList.remove('comparing');
+                    }
+                }
+                
+                if (minIdx !== i) {
+                    [values[i], values[minIdx]] = [values[minIdx], values[i]];
+                    updateBars(values);
+                    swaps++;
+                    updateStats();
+                }
+                
+                bars.forEach(bar => bar.classList.remove('comparing'));
+                bars[i].classList.add('sorted');
+                await sleep(currentSpeed);
+            }
+            
+            if (sortingInProgress) {
+                document.getElementById('status').textContent = 'Сортування завершено!';
+                sortingInProgress = false;
+            }
+        }
+        
+        function startVisualization(algorithm) {
+            if (sortingInProgress) return;
+            
+            resetVisualization();
+            sortingInProgress = true;
+            isPaused = false;
+            startTime = Date.now();
+            document.getElementById('status').textContent = 'Сортування...';
+            document.getElementById('pause-btn').textContent = 'Пауза';
+            
+            switch(algorithm) {
+                case 'bubble':
+                    bubbleSortVisualization();
+                    break;
+                case 'selection':
+                    selectionSortVisualization();
+                    break;
+                case 'merge':
+                    document.getElementById('status').textContent = 'Merge Sort - демонстрація в розробці';
+                    sortingInProgress = false;
+                    break;
+            }
+        }
+        
+        function pauseVisualization() {
+            if (sortingInProgress) {
+                isPaused = !isPaused;
+                document.getElementById('pause-btn').textContent = isPaused ? 'Продовжити' : 'Пауза';
+            }
+        }
+        
+        function resetVisualization() {
+            sortingInProgress = false;
+            isPaused = false;
+            const bars = document.querySelectorAll('.bar');
+            bars.forEach(bar => {
+                bar.classList.remove('comparing', 'sorted');
+            });
+            document.getElementById('status').textContent = 'Оберіть алгоритм для початку';
+            resetStats();
+        }
+        
+        // Тренажер
+        let trainerArray = [];
+        let trainerSteps = 0;
+        let trainerErrors = 0;
+        let selectedElements = [];
+        
+        function startTrainer() {
+            const algorithm = document.getElementById('trainer-algorithm').value;
+            document.getElementById('trainer-container').style.display = 'block';
+            
+            // Генеруємо масив
+            trainerArray = [];
+            for (let i = 0; i < 6; i++) {
+                trainerArray.push(Math.floor(Math.random() * 10) + 1);
+            }
+            
+            // Відображаємо масив
+            const container = document.getElementById('trainer-array');
+            container.innerHTML = '';
+            trainerArray.forEach((val, idx) => {
+                const elem = document.createElement('div');
+                elem.className = 'bar';
+                elem.style.height = val * 15 + 'px';
+                elem.style.cursor = 'pointer';
+                elem.textContent = val;
+                elem.setAttribute('data-index', idx);
+                elem.onclick = () => selectElement(idx);
+                container.appendChild(elem);
+            });
+            
+            trainerSteps = 0;
+            trainerErrors = 0;
+            selectedElements = [];
+            updateTrainerStats();
+        }
+        
+        function selectElement(index) {
+            const bars = document.querySelectorAll('#trainer-array .bar');
+            
+            if (selectedElements.includes(index)) {
+                bars[index].classList.remove('comparing');
+                selectedElements = selectedElements.filter(i => i !== index);
+            } else if (selectedElements.length < 2) {
+                bars[index].classList.add('comparing');
+                selectedElements.push(index);
+                
+                if (selectedElements.length === 2) {
+                    setTimeout(() => swapElements(), 500);
+                }
+            }
+        }
+        
+        function swapElements() {
+            const [idx1, idx2] = selectedElements;
+            const bars = document.querySelectorAll('#trainer-array .bar');
+            
+            // Міняємо значення
+            [trainerArray[idx1], trainerArray[idx2]] = [trainerArray[idx2], trainerArray[idx1]];
+            
+            // Оновлюємо відображення
+            bars[idx1].style.height = trainerArray[idx1] * 15 + 'px';
+            bars[idx1].textContent = trainerArray[idx1];
+            bars[idx2].style.height = trainerArray[idx2] * 15 + 'px';
+            bars[idx2].textContent = trainerArray[idx2];
+            
+            // Очищаємо виділення
+            bars[idx1].classList.remove('comparing');
+            bars[idx2].classList.remove('comparing');
+            selectedElements = [];
+            
+            trainerSteps++;
+            updateTrainerStats();
+        }
+        
+        function updateTrainerStats() {
+            document.getElementById('trainer-steps').textContent = trainerSteps;
+            document.getElementById('trainer-errors').textContent = trainerErrors;
+        }
+        
+        function checkTrainerSolution() {
+            const sorted = [...trainerArray].every((val, idx, arr) => 
+                idx === 0 || arr[idx - 1] <= val
+            );
+            
+            if (sorted) {
+                alert(`Чудово! Масив відсортовано за ${trainerSteps} кроків!`);
+            } else {
+                alert('Масив ще не відсортований. Продовжуйте!');
+                trainerErrors++;
+                updateTrainerStats();
+            }
+        }
+        
+        function showHint() {
+            const algorithm = document.getElementById('trainer-algorithm').value;
+            let hint = '';
+            
+            if (algorithm === 'bubble') {
+                hint = 'Порівнюйте сусідні елементи та міняйте їх місцями, якщо вони в неправильному порядку';
+            } else {
+                hint = 'Знайдіть найменший елемент у невідсортованій частині та помістіть його на початок';
+            }
+            
+            document.getElementById('trainer-instruction').textContent = hint;
+        }
+        
+        // Перевірка коду з пропусками
+        function checkGapFilling() {
+            const gap1 = document.getElementById('gap1').value.trim();
+            const gap2 = document.getElementById('gap2').value;
+            const gap3 = document.getElementById('gap3').value.trim();
+            
+            const correct1 = gap1 === 'n-i-1' || gap1 === 'n - i - 1';
+            const correct2 = gap2 === '>';
+            const correct3 = gap3 === 'arr[j+1], arr[j]' || gap3 === 'arr[j + 1], arr[j]';
+            
+            let result = '';
+            if (correct1 && correct2 && correct3) {
+                result = '<p style="color: green;">✓ Відмінно! Всі пропуски заповнені правильно!</p>';
+            } else {
+                result = '<p style="color: red;">✗ Є помилки. Підказки:<br>';
+                if (!correct1) result += '- Перший пропуск: подумайте про межі циклу<br>';
+                if (!correct2) result += '- Другий пропуск: який знак порівняння для зростання?<br>';
+                if (!correct3) result += '- Третій пропуск: як поміняти елементи місцями?<br>';
+                result += '</p>';
+            }
+            
+            document.getElementById('gap-result').innerHTML = result;
+        }
+        
+        // Перевірка виправлення помилки
+        function checkBugFix() {
+            const code = document.getElementById('buggy-code').textContent;
+            const hasCorrectRange = code.includes('range(i+1, n)') || code.includes('range(i + 1, n)');
+            
+            if (hasCorrectRange) {
+                document.getElementById('bug-result').innerHTML = 
+                    '<p style="color: green;">✓ Правильно! Внутрішній цикл повинен починатися з i+1, а не з i</p>';
+            } else {
+                document.getElementById('bug-result').innerHTML = 
+                    '<p style="color: red;">✗ Помилка все ще є. Подумайте: чи потрібно порівнювати елемент сам з собою?</p>';
+            }
+        }
+        
+        // Змагання алгоритмів
+        async function startRace() {
+            const prediction = document.querySelector('input[name="prediction"]:checked');
+            if (!prediction) {
+                alert('Спочатку оберіть алгоритм!');
+                return;
+            }
+            
+            const testArray = [5, 2, 8, 1, 9];
+            const results = {};
+            
+            // Bubble Sort
+            let arr1 = [...testArray];
+            let start = performance.now();
+            let comparisons1 = 0;
+            for (let i = 0; i < arr1.length; i++) {
+                for (let j = 0; j < arr1.length - i - 1; j++) {
+                    comparisons1++;
+                    if (arr1[j] > arr1[j + 1]) {
+                        [arr1[j], arr1[j + 1]] = [arr1[j + 1], arr1[j]];
+                    }
+                }
+            }
+            results.bubble = {
+                time: performance.now() - start,
+                comparisons: comparisons1
+            };
+            
+            // Selection Sort
+            let arr2 = [...testArray];
+            start = performance.now();
+            let comparisons2 = 0;
+            for (let i = 0; i < arr2.length; i++) {
+                let minIdx = i;
+                for (let j = i + 1; j < arr2.length; j++) {
+                    comparisons2++;
+                    if (arr2[j] < arr2[minIdx]) {
+                        minIdx = j;
+                    }
+                }
+                if (minIdx !== i) {
+                    [arr2[i], arr2[minIdx]] = [arr2[minIdx], arr2[i]];
+                }
+            }
+            results.selection = {
+                time: performance.now() - start,
+                comparisons: comparisons2
+            };
+            
+            // Merge Sort (спрощено для демонстрації)
+            results.merge = {
+                time: 0.001,
+                comparisons: 12
+            };
+            
+            // Визначаємо переможця
+            const winner = Object.keys(results).reduce((a, b) => 
+                results[a].comparisons < results[b].comparisons ? a : b
+            );
+            
+            let resultHTML = '<h4>Результати змагання:</h4>';
+            resultHTML += `<p>Bubble Sort: ${results.bubble.comparisons} порівнянь</p>`;
+            resultHTML += `<p>Selection Sort: ${results.selection.comparisons} порівнянь</p>`;
+            resultHTML += `<p>Merge Sort: ${results.merge.comparisons} порівнянь</p>`;
+            resultHTML += `<p><strong>Переможець: ${winner.charAt(0).toUpperCase() + winner.slice(1)} Sort!</strong></p>`;
+            
+            if (prediction.value === winner) {
+                resultHTML += '<p style="color: green;">✓ Ви вгадали!</p>';
+            } else {
+                resultHTML += '<p style="color: red;">✗ Спробуйте ще раз</p>';
+            }
+            
+            document.getElementById('race-result').innerHTML = resultHTML;
+        }
+        
+        // Тестування власного алгоритму
+        function testCustomAlgorithm() {
+            const code = document.getElementById('custom-algorithm').value;
+            
+            try {
+                // Створюємо функцію з коду користувача
+                const userFunction = new Function('arr', code.replace('def my_sort(arr):', '').replace('return arr', 'return arr;'));
+                
+                // Тестуємо на різних масивах
+                const testCases = [
+                    [5, 2, 8, 1, 9],
+                    [1, 2, 3, 4, 5],
+                    [5, 4, 3, 2, 1],
+                    [1],
+                    []
+                ];
+                
+                let allPassed = true;
+                let results = '<h4>Результати тестування:</h4>';
+                
+                testCases.forEach((testCase, idx) => {
+                    try {
+                        const input = [...testCase];
+                        const result = userFunction(input);
+                        const expected = [...testCase].sort((a, b) => a - b);
+                        
+                        if (JSON.stringify(result) === JSON.stringify(expected)) {
+                            results += `<p style="color: green;">✓ Тест ${idx + 1} пройдено</p>`;
+                        } else {
+                            results += `<p style="color: red;">✗ Тест ${idx + 1} не пройдено. Очікувалось: [${expected}], отримано: [${result}]</p>`;
+                            allPassed = false;
+                        }
+                    } catch (e) {
+                        results += `<p style="color: red;">✗ Тест ${idx + 1}: помилка виконання</p>`;
+                        allPassed = false;
+                    }
+                });
+                
+                if (allPassed) {
+                    results += '<p style="color: green;"><strong>Чудово! Ваш алгоритм працює правильно!</strong></p>';
+                }
+                
+                document.getElementById('custom-result').innerHTML = results;
+            } catch (e) {
+                document.getElementById('custom-result').innerHTML = 
+                    '<p style="color: red;">Помилка в коді. Перевірте синтаксис.</p>';
+            }
+        }
+        
+        // Інтерактивний тест
+        const quizQuestions = [
+            {
+                question: "Яка часова складність bubble sort у найкращому випадку?",
+                options: ["O(1)", "O(n)", "O(n log n)", "O(n²)"],
+                correct: 1
+            },
+            {
+                question: "Який алгоритм найшвидший для великих масивів?",
+                options: ["Bubble Sort", "Selection Sort", "Merge Sort", "Всі однакові"],
+                correct: 2
+            },
+            {
+                question: "Що таке стабільне сортування?",
+                options: [
+                    "Швидке сортування",
+                    "Сортування, яке зберігає порядок однакових елементів",
+                    "Сортування без помилок",
+                    "Сортування з O(1) пам'яті"
+                ],
+                correct: 1
+            },
+            {
+                question: "Скільки обмінів у найгіршому випадку виконає bubble sort для масиву з 5 елементів?",
+                options: ["5", "10", "15", "20"],
+                correct: 1
+            },
+            {
+                question: "Яка просторова складність merge sort?",
+                options: ["O(1)", "O(log n)", "O(n)", "O(n²)"],
+                correct: 2
+            }
+        ];
+        
+        let currentQuestion = 0;
+        let quizAnswers = [];
+        
+        function startQuiz() {
+            currentQuestion = 0;
+            quizAnswers = [];
+            document.getElementById('quiz-navigation').style.display = 'block';
+            showQuestion();
+        }
+        
+        function showQuestion() {
+            const q = quizQuestions[currentQuestion];
+            let html = `<h3>Питання ${currentQuestion + 1}:</h3>`;
+            html += `<p>${q.question}</p>`;
+            html += '<div class="options">';
+            q.options.forEach((opt, idx) => {
+                html += `<label><input type="radio" name="current-question" value="${idx}"> ${opt}</label>`;
+            });
+            html += '</div>';
+            
+            document.getElementById('quiz-questions').innerHTML = html;
+            document.getElementById('question-counter').textContent = `${currentQuestion + 1}/${quizQuestions.length}`;
+            
+            // Відновлюємо попередню відповідь
+            if (quizAnswers[currentQuestion] !== undefined) {
+                document.querySelector(`input[value="${quizAnswers[currentQuestion]}"]`).checked = true;
+            }
+        }
+        
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                saveAnswer();
+                currentQuestion--;
+                showQuestion();
+            }
+        }
+        
+        function nextQuestion() {
+            if (currentQuestion < quizQuestions.length - 1) {
+                saveAnswer();
+                currentQuestion++;
+                showQuestion();
+            }
+        }
+        
+        function saveAnswer() {
+            const selected = document.querySelector('input[name="current-question"]:checked');
+            if (selected) {
+                quizAnswers[currentQuestion] = parseInt(selected.value);
+            }
+        }
+        
+        function finishQuiz() {
+            saveAnswer();
+            
+            let score = 0;
+            let results = '<h3>Результати тесту:</h3>';
+            
+            quizQuestions.forEach((q, idx) => {
+                if (quizAnswers[idx] === q.correct) {
+                    score++;
+                    results += `<p style="color: green;">✓ Питання ${idx + 1}: Правильно!</p>`;
+                } else {
+                    results += `<p style="color: red;">✗ Питання ${idx + 1}: Неправильно. Правильна відповідь: ${q.options[q.correct]}</p>`;
+                }
+            });
+            
+            results += `<h4>Ваш результат: ${score}/${quizQuestions.length}</h4>`;
+            
+            if (score === quizQuestions.length) {
+                results += '<p style="color: green;"><strong>Відмінно! Ви чудово знаєте матеріал!</strong></p>';
+            } else if (score >= quizQuestions.length * 0.7) {
+                results += '<p style="color: orange;"><strong>Добре! Але є що покращити.</strong></p>';
+            } else {
+                results += '<p style="color: red;"><strong>Рекомендуємо повторити матеріал.</strong></p>';
+            }
+            
+            document.getElementById('quiz-questions').innerHTML = results;
+            document.getElementById('quiz-navigation').style.display = 'none';
+        }
+        
+        // True/False швидкий тест
+        const tfAnswers = {1: false, 2: true, 3: false};
+        let tfScore = 0;
+        
+        function answerTrueFalse(question, answer) {
+            const correct = tfAnswers[question] === answer;
+            const resultSpan = document.getElementById(`tf-result-${question}`);
+            
+            if (correct) {
+                resultSpan.innerHTML = ' <span style="color: green;">✓</span>';
+                tfScore++;
+            } else {
+                resultSpan.innerHTML = ' <span style="color: red;">✗</span>';
+            }
+            
+            // Оновлюємо загальний рахунок
+            if (Object.keys(tfAnswers).every(q => document.getElementById(`tf-result-${q}`).innerHTML !== '')) {
+                document.getElementById('tf-score').innerHTML = 
+                    `<strong>Ваш результат: ${tfScore}/3</strong>`;
+            }
+        }
+        
+        // Drag & Drop
+        let draggedElement = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Налаштування drag & drop
+            const draggables = document.querySelectorAll('.draggable-step');
+            const containers = [document.getElementById('available-steps'), document.getElementById('ordered-steps')];
+            
+            draggables.forEach(draggable => {
+                draggable.addEventListener('dragstart', function(e) {
+                    draggedElement = this;
+                    this.style.opacity = '0.5';
+                });
+                
+                draggable.addEventListener('dragend', function(e) {
+                    this.style.opacity = '';
+                });
+            });
+            
+            containers.forEach(container => {
+                if (container) {
+                    container.addEventListener('dragover', function(e) {
+                        e.preventDefault();
+                    });
+                    
+                    container.addEventListener('drop', function(e) {
+                        e.preventDefault();
+                        if (draggedElement) {
+                            this.appendChild(draggedElement);
+                        }
+                    });
+                }
+            });
+        });
+        
+        function checkStepsOrder() {
+            const orderedSteps = document.getElementById('ordered-steps');
+            const steps = orderedSteps.querySelectorAll('.draggable-step');
+            const correctOrder = ['1', '2', '3', '4'];
+            
+            let isCorrect = true;
+            steps.forEach((step, idx) => {
+                if (step.getAttribute('data-step') !== correctOrder[idx]) {
+                    isCorrect = false;
+                }
+            });
+            
+            const result = document.getElementById('steps-result');
+            if (steps.length !== 4) {
+                result.innerHTML = '<p style="color: orange;">Перетягніть всі кроки у правильному порядку</p>';
+            } else if (isCorrect) {
+                result.innerHTML = '<p style="color: green;">✓ Відмінно! Порядок правильний!</p>';
+            } else {
+                result.innerHTML = '<p style="color: red;">✗ Неправильний порядок. Спробуйте ще раз.</p>';
+            }
+        }
+        
+        // Mystery Sort
+        let mysteryAlgorithm = '';
+        
+        async function startMysterySort() {
+            const algorithms = ['bubble', 'selection'];
+            mysteryAlgorithm = algorithms[Math.floor(Math.random() * algorithms.length)];
+            
+            const container = document.getElementById('mystery-array');
+            container.innerHTML = '';
+            
+            const values = [5, 2, 8, 1, 4];
+            values.forEach(val => {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.height = val * 15 + 'px';
+                bar.style.display = 'inline-block';
+                bar.style.margin = '0 5px';
+                bar.textContent = val;
+                container.appendChild(bar);
+            });
+            
+            // Анімація відповідно до обраного алгоритму
+            if (mysteryAlgorithm === 'bubble') {
+                // Показуємо характерну поведінку bubble sort
+                await sleep(1000);
+                // Тут можна додати більш детальну анімацію
+            } else {
+                // Показуємо характерну поведінку selection sort
+                await sleep(1000);
+                // Тут можна додати більш детальну анімацію
+            }
+            
+            document.getElementById('mystery-result').innerHTML = 
+                '<p>Подивіться на анімацію та спробуйте визначити алгоритм</p>';
+        }
+        
+        function checkMysteryAnswer() {
+            const selected = document.querySelector('input[name="mystery"]:checked');
+            if (!selected) {
+                alert('Оберіть алгоритм!');
+                return;
+            }
+            
+            if (selected.value === mysteryAlgorithm) {
+                document.getElementById('mystery-result').innerHTML = 
+                    '<p style="color: green;">✓ Правильно! Це дійсно ' + mysteryAlgorithm + ' sort!</p>';
+            } else {
+                document.getElementById('mystery-result').innerHTML = 
+                    '<p style="color: red;">✗ Неправильно. Спробуйте ще раз або запустіть анімацію знову.</p>';
+            }
+        }
+        
+        // Ініціалізація при завантаженні
+        window.onload = function() {
+            generateArray(currentArraySize);
+        };
+    </script><!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алгоритми сортування</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f4f4f4;
+        }
+        
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        nav {
+            background: #34495e;
+            padding: 0.5rem;
+        }
+        
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            display: block;
+            transition: background 0.3s;
+        }
+        
+        nav a:hover {
+            background: #2c3e50;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: white;
+            min-height: calc(100vh - 200px);
+        }
+        
+        .section {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .algorithm-box {
+            background: #ecf0f1;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 5px;
+        }
+        
+        .visualization {
+            background: #2c3e50;
+            color: white;
+            padding: 2rem;
+            margin: 1rem 0;
+            text-align: center;
+            border-radius: 5px;
+        }
+        
+        .bar {
+            display: inline-block;
+            width: 40px;
+            margin: 2px;
+            background: #3498db;
+            color: white;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .bar.comparing {
+            background: #e74c3c;
+        }
+        
+        .bar.sorted {
+            background: #27ae60;
+        }
+        
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            margin: 0.5rem;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #2980b9;
+        }
+        
+        .quiz-container {
+            background: #ecf0f1;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 5px;
+        }
+        
+        .question {
+            margin: 1rem 0;
+        }
+        
+        .options label {
+            display: block;
+            margin: 0.5rem 0;
+            cursor: pointer;
+        }
+        
+        .task-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 5px;
+        }
+        
+        .difficulty {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .easy { background: #27ae60; color: white; }
+        .medium { background: #f39c12; color: white; }
+        .hard { background: #e74c3c; color: white; }
+        
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 1rem;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        code {
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Алгоритми сортування</h1>
+        <p>Навчальний курс для учнів 10 класу</p>
+    </header>
+    
+    <nav>
+        <ul>
+            <li><a href="#" onclick="showSection('home')">Головна</a></li>
+            <li><a href="#" onclick="showSection('theory')">Теорія</a></li>
+            <li><a href="#" onclick="showSection('visualization')">Візуалізація</a></li>
+            <li><a href="#" onclick="showSection('practice')">Практика</a></li>
+            <li><a href="#" onclick="showSection('tests')">Тести</a></li>
+            <li><a href="#" onclick="showSection('resources')">Ресурси</a></li>
+        </ul>
+    </nav>
+    
+    <div class="container">
+        <!-- Головна сторінка -->
+        <section id="home" class="section active">
+            <h2>Ласкаво просимо!</h2>
+            <p>Цей навчальний сайт допоможе вам зрозуміти основні алгоритми сортування:</p>
+            <ul style="margin: 1rem 0; padding-left: 2rem;">
+                <li>Бульбашкове сортування (Bubble Sort)</li>
+                <li>Сортування вибором (Selection Sort)</li>
+                <li>Сортування злиттям (Merge Sort)</li>
+            </ul>
+            <p>Ви навчитеся:</p>
+            <ul style="margin: 1rem 0; padding-left: 2rem;">
+                <li>Розуміти принципи роботи кожного алгоритму</li>
+                <li>Візуалізувати процес сортування</li>
+                <li>Реалізовувати алгоритми мовою Python</li>
+                <li>Аналізувати складність алгоритмів</li>
+            </ul>
+        </section>
+        
+        <!-- Теорія -->
+        <section id="theory" class="section">
+            <h2>Теоретичний матеріал</h2>
+            
+            <div class="algorithm-box">
+                <h3>1. Бульбашкове сортування (Bubble Sort)</h3>
+                <p><strong>Принцип роботи:</strong> Алгоритм проходить по масиву і порівнює сусідні елементи. Якщо вони розташовані неправильно, він міняє їх місцями. Процес повторюється, поки масив не буде відсортований.</p>
+                <p><strong>Складність:</strong> O(n²)</p>
+                <pre><code>def bubble_sort(arr):
+    n = len(arr)
+    for i in range(n):
+        for j in range(0, n-i-1):
+            if arr[j] > arr[j+1]:
+                arr[j], arr[j+1] = arr[j+1], arr[j]
+    return arr</code></pre>
+            </div>
+            
+            <div class="algorithm-box">
+                <h3>2. Сортування вибором (Selection Sort)</h3>
+                <p><strong>Принцип роботи:</strong> Алгоритм знаходить мінімальний елемент у невідсортованій частині масиву і ставить його на початок.</p>
+                <p><strong>Складність:</strong> O(n²)</p>
+                <pre><code>def selection_sort(arr):
+    n = len(arr)
+    for i in range(n):
+        min_idx = i
+        for j in range(i+1, n):
+            if arr[j] < arr[min_idx]:
+                min_idx = j
+        arr[i], arr[min_idx] = arr[min_idx], arr[i]
+    return arr</code></pre>
+            </div>
+            
+            <div class="algorithm-box">
+                <h3>3. Сортування злиттям (Merge Sort)</h3>
+                <p><strong>Принцип роботи:</strong> Алгоритм ділить масив навпіл, рекурсивно сортує обидві частини, а потім зливає їх у відсортований масив.</p>
+                <p><strong>Складність:</strong> O(n log n)</p>
+                <pre><code>def merge_sort(arr):
+    if len(arr) <= 1:
+        return arr
+    
+    mid = len(arr) // 2
+    left = merge_sort(arr[:mid])
+    right = merge_sort(arr[mid:])
+    
+    return merge(left, right)
+
+def merge(left, right):
+    result = []
+    i = j = 0
+    
+    while i < len(left) and j < len(right):
+        if left[i] < right[j]:
+            result.append(left[i])
+            i += 1
+        else:
+            result.append(right[j])
+            j += 1
+    
+    result.extend(left[i:])
+    result.extend(right[j:])
+    return result</code></pre>
+            </div>
+        </section>
+        
+        <!-- Візуалізація -->
+        <section id="visualization" class="section">
+            <h2>Візуалізація алгоритмів</h2>
+            
+            <div class="visualization">
+                <h3>Налаштування:</h3>
+                <div style="margin: 1rem 0;">
+                    <label>Розмір масиву: <span id="size-value">10</span></label>
+                    <input type="range" id="array-size" min="5" max="20" value="10" onchange="updateArraySize()">
+                    
+                    <label style="margin-left: 2rem;">Швидкість: <span id="speed-value">500</span>мс</label>
+                    <input type="range" id="speed" min="100" max="1000" value="500" step="100" onchange="updateSpeed()">
+                </div>
+                
+                <div style="margin: 1rem 0;">
+                    <button onclick="generateRandomArray()">Випадковий масив</button>
+                    <button onclick="generateReversedArray()">Зворотній порядок</button>
+                    <button onclick="generateNearlySorted()">Майже відсортований</button>
+                </div>
+                
+                <h3>Оберіть алгоритм:</h3>
+                <button onclick="startVisualization('bubble')">Бульбашкове</button>
+                <button onclick="startVisualization('selection')">Вибором</button>
+                <button onclick="startVisualization('merge')">Злиттям</button>
+                <button onclick="pauseVisualization()" id="pause-btn">Пауза</button>
+                <button onclick="resetVisualization()">Скинути</button>
+                
+                <div id="array-container" style="margin-top: 2rem;">
+                    <!-- Динамічно створюється -->
+                </div>
+                
+                <div style="margin-top: 1rem; display: flex; justify-content: space-around;">
+                    <div>Порівнянь: <span id="comparisons">0</span></div>
+                    <div>Обмінів: <span id="swaps">0</span></div>
+                    <div>Час: <span id="time">0</span>с</div>
+                </div>
+                
+                <p id="status" style="margin-top: 1rem;">Оберіть алгоритм для початку</p>
+            </div>
+            
+            <!-- Інтерактивний код -->
+            <div class="algorithm-box" style="margin-top: 2rem;">
+                <h3>Спробуйте самі написати код:</h3>
+                <div style="display: flex; gap: 1rem;">
+                    <div style="flex: 1;">
+                        <h4>Ваш код:</h4>
+                        <textarea id="user-code" rows="10" style="width: 100%; font-family: monospace;">
+def bubble_sort(arr):
+    # Напишіть ваш код тут
+    n = len(arr)
+    # ...
+    return arr</textarea>
+                        <button onclick="testUserCode()">Перевірити код</button>
+                    </div>
+                    <div style="flex: 1;">
+                        <h4>Результат:</h4>
+                        <div id="code-result" style="background: #f4f4f4; padding: 1rem; min-height: 200px;">
+                            Напишіть код та натисніть "Перевірити"
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Практика -->
+        <section id="practice" class="section">
+            <h2>Практичні завдання</h2>
+            
+            <!-- Інтерактивний тренажер -->
+            <div class="algorithm-box">
+                <h3>Тренажер: Покрокове сортування</h3>
+                <p>Відсортуйте масив вручну, використовуючи обраний алгоритм:</p>
+                
+                <div style="margin: 1rem 0;">
+                    <select id="trainer-algorithm">
+                        <option value="bubble">Бульбашкове сортування</option>
+                        <option value="selection">Сортування вибором</option>
+                    </select>
+                    <button onclick="startTrainer()">Почати тренування</button>
+                </div>
+                
+                <div id="trainer-container" style="display: none;">
+                    <div id="trainer-array" style="margin: 1rem 0;">
+                        <!-- Динамічно створюється -->
+                    </div>
+                    <p id="trainer-instruction">Клікніть на два елементи для обміну</p>
+                    <div>
+                        <span>Кроків: <span id="trainer-steps">0</span></span>
+                        <span style="margin-left: 2rem;">Помилок: <span id="trainer-errors">0</span></span>
+                    </div>
+                    <button onclick="checkTrainerSolution()">Перевірити</button>
+                    <button onclick="showHint()">Підказка</button>
+                </div>
+            </div>
+            
+            <!-- Інтерактивні завдання -->
+            <div class="task-card">
+                <span class="difficulty easy">Легкий</span>
+                <h3>Завдання 1: Заповніть пропуски</h3>
+                <p>Доповніть код бульбашкового сортування:</p>
+                <pre style="background: #f8f9fa; color: #333;">
+def bubble_sort(arr):
+    n = len(arr)
+    for i in range(n):
+        for j in range(0, <input type="text" id="gap1" style="width: 60px;" placeholder="?">):
+            if arr[j] <select id="gap2"><option value="">?</option><option value=">">&gt;</option><option value="<">&lt;</option></select> arr[j+1]:
+                arr[j], arr[j+1] = <input type="text" id="gap3" style="width: 100px;" placeholder="?">
+    return arr
+                </pre>
+                <button onclick="checkGapFilling()">Перевірити</button>
+                <div id="gap-result"></div>
+            </div>
+            
+            <div class="task-card">
+                <span class="difficulty medium">Середній</span>
+                <h3>Завдання 2: Знайдіть помилку</h3>
+                <p>У коді є помилка. Знайдіть та виправте її:</p>
+                <pre contenteditable="true" id="buggy-code" style="background: #f8f9fa; color: #333; padding: 1rem;">
+def selection_sort(arr):
+    n = len(arr)
+    for i in range(n):
+        min_idx = i
+        for j in range(i, n):  # Помилка тут!
+            if arr[j] < arr[min_idx]:
+                min_idx = j
+        arr[i], arr[min_idx] = arr[min_idx], arr[i]
+    return arr
+                </pre>
+                <button onclick="checkBugFix()">Перевірити виправлення</button>
+                <div id="bug-result"></div>
+            </div>
+            
+            <div class="task-card">
+                <span class="difficulty hard">Складний</span>
+                <h3>Завдання 3: Змагання алгоритмів</h3>
+                <p>Передбачте, який алгоритм швидше відсортує масив:</p>
+                <div id="algorithm-race">
+                    <p>Масив: <span id="race-array">[5, 2, 8, 1, 9]</span></p>
+                    <div style="margin: 1rem 0;">
+                        <label><input type="radio" name="prediction" value="bubble"> Bubble Sort</label>
+                        <label><input type="radio" name="prediction" value="selection"> Selection Sort</label>
+                        <label><input type="radio" name="prediction" value="merge"> Merge Sort</label>
+                    </div>
+                    <button onclick="startRace()">Почати змагання</button>
+                    <div id="race-result" style="margin-top: 1rem;"></div>
+                </div>
+            </div>
+            
+            <div class="task-card">
+                <span class="difficulty medium">Середній</span>
+                <h3>Проект: Створіть свій алгоритм</h3>
+                <p>Спробуйте створити власний алгоритм сортування!</p>
+                <textarea id="custom-algorithm" rows="10" style="width: 100%; font-family: monospace;">
+def my_sort(arr):
+    # Ваш унікальний алгоритм
+    # Підказка: можете комбінувати ідеї різних алгоритмів
+    
+    return arr
+                </textarea>
+                <button onclick="testCustomAlgorithm()">Тестувати алгоритм</button>
+                <div id="custom-result"></div>
+            </div>
+        </section>
+        
+        <!-- Тести -->
+        <section id="tests" class="section">
+            <h2>Тести для самоперевірки</h2>
+            
+            <!-- Інтерактивний тест -->
+            <div class="quiz-container">
+                <h3>Тест 1: Основи алгоритмів</h3>
+                <div id="quiz-questions">
+                    <!-- Питання будуть динамічно завантажуватися -->
+                </div>
+                <button onclick="startQuiz()">Почати тест</button>
+                <div id="quiz-navigation" style="display: none; margin-top: 1rem;">
+                    <button onclick="previousQuestion()">← Попереднє</button>
+                    <span id="question-counter">1/5</span>
+                    <button onclick="nextQuestion()">Наступне →</button>
+                    <button onclick="finishQuiz()" style="margin-left: 2rem;">Завершити тест</button>
+                </div>
+            </div>
+            
+            <!-- Інтерактивні вправи -->
+            <div class="algorithm-box" style="margin-top: 2rem;">
+                <h3>Вправа: Визначте алгоритм</h3>
+                <p>Подивіться на анімацію та визначте, який алгоритм використовується:</p>
+                <div id="mystery-sort" style="background: #2c3e50; padding: 1rem; margin: 1rem 0;">
+                    <div id="mystery-array" style="text-align: center;">
+                        <!-- Анімація -->
+                    </div>
+                </div>
+                <div>
+                    <label><input type="radio" name="mystery" value="bubble"> Bubble Sort</label>
+                    <label><input type="radio" name="mystery" value="selection"> Selection Sort</label>
+                    <label><input type="radio" name="mystery" value="insertion"> Insertion Sort</label>
+                </div>
+                <button onclick="startMysterySort()">Показати анімацію</button>
+                <button onclick="checkMysteryAnswer()">Перевірити</button>
+                <div id="mystery-result"></div>
+            </div>
+            
+            <!-- Drag & Drop вправа -->
+            <div class="algorithm-box">
+                <h3>Вправа: Розставте кроки алгоритму</h3>
+                <p>Перетягніть кроки у правильному порядку для bubble sort:</p>
+                <div id="steps-container" style="display: flex; gap: 2rem; margin: 1rem 0;">
+                    <div style="flex: 1;">
+                        <h4>Кроки (перетягніть →)</h4>
+                        <div id="available-steps" style="min-height: 200px; background: #f4f4f4; padding: 1rem;">
+                            <div class="draggable-step" draggable="true" data-step="1">Порівняти сусідні елементи</div>
+                            <div class="draggable-step" draggable="true" data-step="2">Якщо перший більший - поміняти місцями</div>
+                            <div class="draggable-step" draggable="true" data-step="3">Повторити для всього масиву</div>
+                            <div class="draggable-step" draggable="true" data-step="4">Повторити n-1 разів</div>
+                        </div>
+                    </div>
+                    <div style="flex: 1;">
+                        <h4>Правильний порядок</h4>
+                        <div id="ordered-steps" style="min-height: 200px; background: #ecf0f1; padding: 1rem;">
+                            <!-- Сюди перетягуються кроки -->
+                        </div>
+                    </div>
+                </div>
+                <button onclick="checkStepsOrder()">Перевірити порядок</button>
+                <div id="steps-result"></div>
+            </div>
+            
+            <!-- Швидкий тест -->
+            <div class="algorithm-box">
+                <h3>Швидкий тест: True/False</h3>
+                <div id="true-false-container">
+                    <div class="question" style="margin: 1rem 0;">
+                        <p>1. Bubble sort завжди виконує O(n²) операцій</p>
+                        <button onclick="answerTrueFalse(1, true)">True</button>
+                        <button onclick="answerTrueFalse(1, false)">False</button>
+                        <span id="tf-result-1"></span>
+                    </div>
+                    <div class="question" style="margin: 1rem 0;">
+                        <p>2. Merge sort використовує принцип "розділяй і володарюй"</p>
+                        <button onclick="answerTrueFalse(2, true)">True</button>
+                        <button onclick="answerTrueFalse(2, false)">False</button>
+                        <span id="tf-result-2"></span>
+                    </div>
+                    <div class="question" style="margin: 1rem 0;">
+                        <p>3. Selection sort є стабільним алгоритмом</p>
+                        <button onclick="answerTrueFalse(3, true)">True</button>
+                        <button onclick="answerTrueFalse(3, false)">False</button>
+                        <span id="tf-result-3"></span>
+                    </div>
+                </div>
+                <div id="tf-score" style="margin-top: 1rem;"></div>
+            </div>
+        </section>
+        
+        <!-- Ресурси -->
+        <section id="resources" class="section">
+            <h2>Додаткові ресурси</h2>
+            
+            <h3>Корисні посилання:</h3>
+            <ul style="margin: 1rem 0; padding-left: 2rem;">
+                <li><a href="https://visualgo.net/en/sorting" target="_blank">VisuAlgo - Візуалізація алгоритмів</a></li>
+                <li><a href="https://www.toptal.com/developers/sorting-algorithms" target="_blank">Порівняння алгоритмів сортування</a></li>
+                <li><a href="https://www.geeksforgeeks.org/sorting-algorithms/" target="_blank">GeeksforGeeks - Алгоритми сортування</a></li>
+            </ul>
+            
+            <h3>Рекомендована література:</h3>
+            <ul style="margin: 1rem 0; padding-left: 2rem;">
+                <li>"Алгоритми: побудова та аналіз" - Томас Кормен</li>
+                <li>"Структури даних та алгоритми в Python" - Майкл Гудріч</li>
+            </ul>
+            
+            <h3>Відео-уроки:</h3>
+            <ul style="margin: 1rem 0; padding-left: 2rem;">
+                <li>CS50 - Лекція про алгоритми сортування</li>
+                <li>Computerphile - Візуалізація сортування</li>
+            </ul>
+        </section>
+    </div>
+    
+    <script>
+        function showSection(sectionId) {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => section.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+        }
+        
+        let sortingInProgress = false;
+        
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        function getArrayValues() {
+            const bars = document.querySelectorAll('.bar');
+            return Array.from(bars).map(bar => parseInt(bar.textContent));
+        }
+        
+        function updateBars(values) {
+            const bars = document.querySelectorAll('.bar');
+            bars.forEach((bar, index) => {
+                bar.style.height = values[index] * 10 + 'px';
+                bar.textContent = values[index];
+            });
+        }
+        
+        async function bubbleSortVisualization() {
+            const values = getArrayValues();
+            const bars = document.querySelectorAll('.bar');
+            const n = values.length;
+            
+            for (let i = 0; i < n && sortingInProgress; i++) {
+                for (let j = 0; j < n - i - 1 && sortingInProgress; j++) {
+                    bars[j].classList.add('comparing');
+                    bars[j + 1].classList.add('comparing');
+                    
+                    await sleep(500);
+                    
+                    if (values[j] > values[j + 1]) {
+                        [values[j], values[j + 1]] = [values[j + 1], values[j]];
+                        updateBars(values);
+                    }
+                    
+                    bars[j].classList.remove('comparing');
+                    bars[j + 1].classList.remove('comparing');
+                }
+                bars[n - i - 1].classList.add('sorted');
+            }
+            
+            document.getElementById('status').textContent = 'Сортування завершено!';
+        }
+        
+        async function selectionSortVisualization() {
+            const values = getArrayValues();
+            const bars = document.querySelectorAll('.bar');
+            const n = values.length;
+            
+            for (let i = 0; i < n && sortingInProgress; i++) {
+                let minIdx = i;
+                bars[i].classList.add('comparing');
+                
+                for (let j = i + 1; j < n && sortingInProgress; j++) {
+                    bars[j].classList.add('comparing');
+                    await sleep(300);
+                    
+                    if (values[j] < values[minIdx]) {
+                        if (minIdx !== i) bars[minIdx].classList.remove('comparing');
+                        minIdx = j;
+                    } else {
+                        bars[j].classList.remove('comparing');
+                    }
+                }
+                
+                if (minIdx !== i) {
+                    [values[i], values[minIdx]] = [values[minIdx], values[i]];
+                    updateBars(values);
+                }
+                
+                bars.forEach(bar => bar.classList.remove('comparing'));
+                bars[i].classList.add('sorted');
+                await sleep(500);
+            }
+            
+            document.getElementById('status').textContent = 'Сортування завершено!';
+        }
+        
+        function startVisualization(algorithm) {
+            if (sortingInProgress) return;
+            
+            resetVisualization();
+            sortingInProgress = true;
+            document.getElementById('status').textContent = 'Сортування...';
+            
+            switch(algorithm) {
+                case 'bubble':
+                    bubbleSortVisualization();
+                    break;
+                case 'selection':
+                    selectionSortVisualization();
+                    break;
+                case 'merge':
+                    document.getElementById('status').textContent = 'Візуалізація злиття - у розробці';
+                    sortingInProgress = false;
+                    break;
+            }
+        }
+        
+        function resetVisualization() {
+            sortingInProgress = false;
+            const bars = document.querySelectorAll('.bar');
+            bars.forEach(bar => {
+                bar.classList.remove('comparing', 'sorted');
+            });
+            updateBars([8, 3, 5, 10, 2, 7]);
+            document.getElementById('status').textContent = 'Оберіть алгоритм для початку';
+        }
+        
+        function checkAnswers() {
+            const answers = {
+                q1: 'c',
+                q2: 'c',
+                q3: 'b'
+            };
+            
+            let score = 0;
+            let results = '<h4>Результати:</h4>';
+            
+            for (let question in answers) {
+                const selected = document.querySelector(`input[name="${question}"]:checked`);
+                if (selected && selected.value === answers[question]) {
+                    score++;
+                    results += `<p style="color: green;">✓ Питання ${question.slice(1)} - Правильно!</p>`;
+                } else {
+                    results += `<p style="color: red;">✗ Питання ${question.slice(1)} - Неправильно</p>`;
+                }
+            }
+            
+            results += `<p><strong>Ваш результат: ${score}/3</strong></p>`;
+            document.getElementById('test-results').innerHTML = results;
+        }
+    </script>
+</body>
+</html>
