@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сортування злиттям - Теорія</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f4f4f4;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        h3 {
+            color: #7f8c8d;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-box {
+            background: #ecf0f1;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .example {
+            background: #e8f8f5;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid #27ae60;
+        }
+        
+        .complexity-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .complexity-table th,
+        .complexity-table td {
+            border: 1px solid #bdc3c7;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        .complexity-table th {
+            background: #34495e;
+            color: white;
+        }
+        
+        .complexity-table tr:nth-child(even) {
+            background: #ecf0f1;
+        }
+        
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        
+        code {
+            font-family: 'Courier New', monospace;
+            background: #ecf0f1;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        
+        .visual-demo {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .tree-diagram {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .tree-level {
+            display: flex;
+            gap: 20px;
+            margin: 10px 0;
+            justify-content: center;
+        }
+        
+        .array-box {
+            background: #3498db;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            min-width: 60px;
+            text-align: center;
+        }
+        
+        .array-box.split {
+            background: #e74c3c;
+        }
+        
+        .array-box.merge {
+            background: #27ae60;
+        }
+        
+        .arrow {
+            font-size: 24px;
+            color: #7f8c8d;
+            margin: 5px 0;
+        }
+        
+        .advantages {
+            background: #d5f4e6;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .disadvantages {
+            background: #fadbd8;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+        
+        .nav-buttons a {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .nav-buttons a:hover {
+            background: #2980b9;
+        }
+        
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        li {
+            margin-bottom: 5px;
+        }
+        
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        
+        .comparison-box {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .comparison-item {
+            flex: 1;
+            padding: 15px;
+            border-radius: 5px;
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+        }
+        
+        .comparison-item h4 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Сортування злиттям (Merge Sort)</h1>
+        
+        <div class="concept-box">
+            <h2>Основна ідея</h2>
+            <p>Сортування злиттям - це ефективний алгоритм, який використовує стратегію <strong>"розділяй і володарюй"</strong> (divide and conquer):</p>
+            <ol>
+                <li><strong>Розділити:</strong> Розділити масив на дві половини</li>
+                <li><strong>Завоювати:</strong> Рекурсивно відсортувати кожну половину</li>
+                <li><strong>Об'єднати:</strong> Злити дві відсортовані половини в один відсортований масив</li>
+            </ol>
+        </div>
+        
+        <h2>Візуалізація алгоритму</h2>
+        
+        <div class="visual-demo">
+            <h3>Процес розділення та злиття</h3>
+            
+            <div class="tree-diagram">
+                <div class="tree-level">
+                    <div class="array-box">[38, 27, 43, 3, 9, 82, 10]</div>
+                </div>
+                
+                <div class="arrow">↓ Розділення</div>
+                
+                <div class="tree-level">
+                    <div class="array-box split">[38, 27, 43, 3]</div>
+                    <div class="array-box split">[9, 82, 10]</div>
+                </div>
+                
+                <div class="arrow">↓</div>
+                
+                <div class="tree-level">
+                    <div class="array-box split">[38, 27]</div>
+                    <div class="array-box split">[43, 3]</div>
+                    <div class="array-box split">[9, 82]</div>
+                    <div class="array-box split">[10]</div>
+                </div>
+                
+                <div class="arrow">↓</div>
+                
+                <div class="tree-level">
+                    <div class="array-box split">[38]</div>
+                    <div class="array-box split">[27]</div>
+                    <div class="array-box split">[43]</div>
+                    <div class="array-box split">[3]</div>
+                    <div class="array-box split">[9]</div>
+                    <div class="array-box split">[82]</div>
+                    <div class="array-box split">[10]</div>
+                </div>
+                
+                <div class="arrow">↓ Злиття</div>
+                
+                <div class="tree-level">
+                    <div class="array-box merge">[27, 38]</div>
+                    <div class="array-box merge">[3, 43]</div>
+                    <div class="array-box merge">[9, 82]</div>
+                    <div class="array-box merge">[10]</div>
+                </div>
+                
+                <div class="arrow">↓</div>
+                
+                <div class="tree-level">
+                    <div class="array-box merge">[3, 27, 38, 43]</div>
+                    <div class="array-box merge">[9, 10, 82]</div>
+                </div>
+                
+                <div class="arrow">↓</div>
+                
+                <div class="tree-level">
+                    <div class="array-box merge">[3, 9, 10, 27, 38, 43, 82]</div>
+                </div>
+            </div>
+        </div>
+        
+        <h2>Реалізація на Python</h2>
+        
+        <h3>Базова версія</h3>
+        <pre><code>def merge_sort(arr):
+    # Базовий випадок: масив з 0 або 1 елементом вже відсортований
+    if len(arr) <= 1:
+        return arr
+    
+    # Розділяємо масив на дві половини
+    mid = len(arr) // 2
+    left_half = arr[:mid]
+    right_half = arr[mid:]
+    
+    # Рекурсивно сортуємо обидві половини
+    left_sorted = merge_sort(left_half)
+    right_sorted = merge_sort(right_half)
+    
+    # Зливаємо відсортовані половини
+    return merge(left_sorted, right_sorted)
+
+def merge(left, right):
+    """Функція злиття двох відсортованих масивів"""
+    result = []
+    i = j = 0
+    
+    # Порівнюємо елементи з обох масивів
+    while i < len(left) and j < len(right):
+        if left[i] <= right[j]:
+            result.append(left[i])
+            i += 1
+        else:
+            result.append(right[j])
+            j += 1
+    
+    # Додаємо залишки (якщо вони є)
+    result.extend(left[i:])
+    result.extend(right[j:])
+    
+    return result
+
+# Приклад використання
+numbers = [38, 27, 43, 3, 9, 82, 10]
+print("До сортування:", numbers)
+sorted_numbers = merge_sort(numbers)
+print("Після сортування:", sorted_numbers)</code></pre>
+        
+        <h3>Версія з виведенням кроків</h3>
+        <pre><code>def merge_sort_verbose(arr, depth=0):
+    """Merge sort з виведенням кроків"""
+    indent = "  " * depth
+    print(f"{indent}Сортуємо: {arr}")
+    
+    if len(arr) <= 1:
+        print(f"{indent}Базовий випадок: {arr}")
+        return arr
+    
+    mid = len(arr) // 2
+    print(f"{indent}Розділяємо на: {arr[:mid]} та {arr[mid:]}")
+    
+    # Рекурсивно сортуємо
+    left = merge_sort_verbose(arr[:mid], depth + 1)
+    right = merge_sort_verbose(arr[mid:], depth + 1)
+    
+    # Зливаємо
+    result = merge_verbose(left, right, depth)
+    print(f"{indent}Результат злиття: {result}")
+    
+    return result
+
+def merge_verbose(left, right, depth):
+    """Злиття з виведенням процесу"""
+    indent = "  " * depth
+    print(f"{indent}Зливаємо {left} та {right}")
+    
+    result = []
+    i = j = 0
+    
+    while i < len(left) and j < len(right):
+        if left[i] <= right[j]:
+            result.append(left[i])
+            i += 1
+        else:
+            result.append(right[j])
+            j += 1
+    
+    result.extend(left[i:])
+    result.extend(right[j:])
+    
+    return result</code></pre>
+        
+        <h3>Оптимізована версія "на місці"</h3>
+        <pre><code>def merge_sort_in_place(arr, left=0, right=None):
+    """Merge sort без додаткових масивів (майже)"""
+    if right is None:
+        right = len(arr) - 1
+    
+    if left < right:
+        mid = (left + right) // 2
+        
+        # Рекурсивно сортуємо половини
+        merge_sort_in_place(arr, left, mid)
+        merge_sort_in_place(arr, mid + 1, right)
+        
+        # Зливаємо
+        merge_in_place(arr, left, mid, right)
+    
+    return arr
+
+def merge_in_place(arr, left, mid, right):
+    """Злиття на місці"""
+    # Створюємо тимчасові масиви
+    left_part = arr[left:mid + 1]
+    right_part = arr[mid + 1:right + 1]
+    
+    i = j = 0
+    k = left
+    
+    # Зливаємо назад в основний масив
+    while i < len(left_part) and j < len(right_part):
+        if left_part[i] <= right_part[j]:
+            arr[k] = left_part[i]
+            i += 1
+        else:
+            arr[k] = right_part[j]
+            j += 1
+        k += 1
+    
+    # Копіюємо залишки
+    while i < len(left_part):
+        arr[k] = left_part[i]
+        i += 1
+        k += 1
+    
+    while j < len(right_part):
+        arr[k] = right_part[j]
+        j += 1
+        k += 1</code></pre>
+        
+        <h2>Покроковий приклад</h2>
+        
+        <div class="example">
+            <h3>Сортуємо масив [38, 27, 43, 3]</h3>
+            
+            <p><strong>Етап розділення:</strong></p>
+            <ol>
+                <li>[38, 27, 43, 3] → [38, 27] | [43, 3]</li>
+                <li>[38, 27] → [38] | [27]</li>
+                <li>[43, 3] → [43] | [3]</li>
+            </ol>
+            
+            <p><strong>Етап злиття:</strong></p>
+            <ol>
+                <li>Зливаємо [38] та [27] → [27, 38]</li>
+                <li>Зливаємо [43] та [3] → [3, 43]</li>
+                <li>Зливаємо [27, 38] та [3, 43] → [3, 27, 38, 43]</li>
+            </ol>
+            
+            <p><strong>Детальне злиття [27, 38] та [3, 43]:</strong></p>
+            <ul>
+                <li>Порівнюємо 27 та 3 → беремо 3</li>
+                <li>Порівнюємо 27 та 43 → беремо 27</li>
+                <li>Порівнюємо 38 та 43 → беремо 38</li>
+                <li>Залишився 43 → додаємо його</li>
+                <li>Результат: [3, 27, 38, 43]</li>
+            </ul>
+        </div>
+        
+        <h2>Аналіз складності</h2>
+        
+        <table class="complexity-table">
+            <tr>
+                <th>Випадок</th>
+                <th>Часова складність</th>
+                <th>Пояснення</th>
+            </tr>
+            <tr>
+                <td>Найкращий</td>
+                <td>O(n log n)</td>
+                <td>Завжди ділимо масив навпіл log n разів</td>
+            </tr>
+            <tr>
+                <td>Середній</td>
+                <td>O(n log n)</td>
+                <td>Складність не залежить від розташування елементів</td>
+            </tr>
+            <tr>
+                <td>Найгірший</td>
+                <td>O(n log n)</td>
+                <td>Алгоритм завжди виконує однакову кількість операцій</td>
+            </tr>
+            <tr>
+                <td>Просторова складність</td>
+                <td>O(n)</td>
+                <td>Потрібна додаткова пам'ять для тимчасових масивів</td>
+            </tr>
+        </table>
+        
+        <h2>Математичний аналіз</h2>
+        
+        <div class="concept-box">
+            <h3>Рекурентне співвідношення</h3>
+            <p>Час роботи merge sort можна виразити як:</p>
+            <p><strong>T(n) = 2T(n/2) + O(n)</strong></p>
+            <ul>
+                <li>2T(n/2) - час на сортування двох половин</li>
+                <li>O(n) - час на злиття</li>
+            </ul>
+            
+            <p>Розв'язуючи це рівняння, отримуємо:</p>
+            <p><strong>T(n) = O(n log n)</strong></p>
+            
+            <h3>Дерево рекурсії</h3>
+            <ul>
+                <li>Глибина дерева: log₂ n</li>
+                <li>Робота на кожному рівні: O(n)</li>
+                <li>Загальна робота: O(n) × log₂ n = O(n log n)</li>
+            </ul>
+        </div>
+        
+        <h2>Переваги та недоліки</h2>
+        
+        <div class="advantages">
+            <h3>✅ Переваги:</h3>
+            <ul>
+                <li>Гарантована часова складність O(n log n) у всіх випадках</li>
+                <li>Стабільний алгоритм - зберігає порядок однакових елементів</li>
+                <li>Передбачувана поведінка</li>
+                <li>Паралелізується природним чином</li>
+                <li>Добре працює зі зв'язаними списками</li>
+                <li>Ефективний для великих масивів</li>
+            </ul>
+        </div>
+        
+        <div class="disadvantages">
+            <h3>❌ Недоліки:</h3>
+            <ul>
+                <li>Потребує додаткову пам'ять O(n)</li>
+                <li>Не адаптивний - не використовує вже відсортовані частини</li>
+                <li>Для малих масивів може бути повільнішим за простіші алгоритми</li>
+                <li>Більше накладних витрат через рекурсію</li>
+            </ul>
+        </div>
+        
+        <h2>Варіації та оптимізації</h2>
+        
+        <h3>1. Гібридний підхід</h3>
+        <pre><code>def hybrid_merge_sort(arr):
+    """Використовує insertion sort для малих підмасивів"""
+    if len(arr) <= 10:  # Поріг для малих масивів
+        return insertion_sort(arr)
+    
+    mid = len(arr) // 2
+    left = hybrid_merge_sort(arr[:mid])
+    right = hybrid_merge_sort(arr[mid:])
+    
+    return merge(left, right)
+
+def insertion_sort(arr):
+    """Швидкий для малих масивів"""
+    for i in range(1, len(arr)):
+        key = arr[i]
+        j = i - 1
+        while j >= 0 and arr[j] > key:
+            arr[j + 1] = arr[j]
+            j -= 1
+        arr[j + 1] = key
+    return arr</code></pre>
+        
+        <h3>2. Ітеративна версія (Bottom-up)</h3>
+        <pre><code>def merge_sort_iterative(arr):
+    """Merge sort без рекурсії"""
+    n = len(arr)
+    size = 1
+    
+    while size < n:
+        # Зливаємо підмасиви розміру size
+        for start in range(0, n, size * 2):
+            mid = min(start + size - 1, n - 1)
+            end = min(start + size * 2 - 1, n - 1)
+            
+            if mid < end:
+                merge_range(arr, start, mid, end)
+        
+        size *= 2
+    
+    return arr
+
+def merge_range(arr, left, mid, right):
+    """Злиття для певного діапазону"""
+    left_part = arr[left:mid + 1]
+    right_part = arr[mid + 1:right + 1]
+    
+    i = j = 0
+    k = left
+    
+    while i < len(left_part) and j < len(right_part):
+        if left_part[i] <= right_part[j]:
+            arr[k] = left_part[i]
+            i += 1
+        else:
+            arr[k] = right_part[j]
+            j += 1
+        k += 1
+    
+    while i < len(left_part):
+        arr[k] = left_part[i]
+        i += 1
+        k += 1
+    
+    while j < len(right_part):
+        arr[k] = right_part[j]
+        j += 1
+        k += 1</code></pre>
+        
+        <h3>3. Natural Merge Sort</h3>
+        <p>Використовує вже відсортовані підпослідовності в масиві</p>
+        
+        <h2>Порівняння з іншими алгоритмами</h2>
+        
+        <table class="complexity-table">
+            <tr>
+                <th>Алгоритм</th>
+                <th>Найкращий</th>
+                <th>Середній</th>
+                <th>Найгірший</th>
+                <th>Пам'ять</th>
+                <th>Стабільний</th>
+            </tr>
+            <tr>
+                <td>Merge Sort</td>
+                <td>O(n log n)</td>
+                <td>O(n log n)</td>
+                <td>O(n log n)</td>
+                <td>O(n)</td>
+                <td>Так</td>
+            </tr>
+            <tr>
+                <td>Quick Sort</td>
+                <td>O(n log n)</td>
+                <td>O(n log n)</td>
+                <td>O(n²)</td>
+                <td>O(log n)</td>
+                <td>Ні</td>
+            </tr>
+            <tr>
+                <td>Heap Sort</td>
+                <td>O(n log n)</td>
+                <td>O(n log n)</td>
+                <td>O(n log n)</td>
+                <td>O(1)</td>
+                <td>Ні</td>
+            </tr>
+            <tr>
+                <td>Bubble Sort</td>
+                <td>O(n)</td>
+                <td>O(n²)</td>
+                <td>O(n²)</td>
+                <td>O(1)</td>
+                <td>Так</td>
+            </tr>
+        </table>
+        
+        <h2>Застосування</h2>
+        
+        <div class="comparison-box">
+            <div class="comparison-item">
+                <h4>Коли використовувати Merge Sort:</h4>
+                <ul>
+                    <li>Потрібна гарантована швидкість O(n log n)</li>
+                    <li>Важлива стабільність сортування</li>
+                    <li>Сортування зв'язаних списків</li>
+                    <li>Зовнішнє сортування (файли)</li>
+                    <li>Паралельна обробка даних</li>
+                </ul>
+            </div>
+            
+            <div class="comparison-item">
+                <h4>Коли НЕ використовувати:</h4>
+                <ul>
+                    <li>Обмежена пам'ять</li>
+                    <li>Малі масиви (< 50 елементів)</li>
+                    <li>Дані вже частково відсортовані</li>
+                    <li>Потрібне сортування на місці</li>
+                </ul>
+            </div>
+        </div>
+        
+        <h2>Цікаві факти</h2>
+        
+        <div class="concept-box">
+            <ul>
+                <li>Merge Sort був винайдений Джоном фон Нейманом в 1945 році</li>
+                <li>Використовується в стандартних бібліотеках багатьох мов програмування</li>
+                <li>Java використовує модифікований merge sort (TimSort) для сортування об'єктів</li>
+                <li>Ідеальний для сортування даних, які не поміщаються в пам'ять</li>
+                <li>Основа для багатьох паралельних алгоритмів сортування</li>
+            </ul>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="selection-sort.html">← Selection Sort</a>
+            <a href="index.html">На головну</a>
+            <a href="quick-sort.html">Quick Sort →</a>
+        </div>
+    </div>
+</body>
+</html>

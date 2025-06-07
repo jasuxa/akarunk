@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бульбашкове сортування - Теорія</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f4f4f4;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        h3 {
+            color: #7f8c8d;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-box {
+            background: #ecf0f1;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .example {
+            background: #e8f8f5;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid #27ae60;
+        }
+        
+        .complexity-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .complexity-table th,
+        .complexity-table td {
+            border: 1px solid #bdc3c7;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        .complexity-table th {
+            background: #34495e;
+            color: white;
+        }
+        
+        .complexity-table tr:nth-child(even) {
+            background: #ecf0f1;
+        }
+        
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        
+        code {
+            font-family: 'Courier New', monospace;
+            background: #ecf0f1;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        
+        .visual-demo {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .array-element {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            text-align: center;
+            margin: 5px;
+            background: #3498db;
+            color: white;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .array-element.comparing {
+            background: #e74c3c;
+            transform: scale(1.1);
+        }
+        
+        .array-element.sorted {
+            background: #27ae60;
+        }
+        
+        .step-explanation {
+            margin-top: 15px;
+            padding: 10px;
+            background: #e8f4f8;
+            border-radius: 5px;
+        }
+        
+        .advantages {
+            background: #d5f4e6;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .disadvantages {
+            background: #fadbd8;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+        
+        .nav-buttons a {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .nav-buttons a:hover {
+            background: #2980b9;
+        }
+        
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        li {
+            margin-bottom: 5px;
+        }
+        
+        .bubble-animation {
+            position: relative;
+            height: 60px;
+            margin: 20px 0;
+        }
+        
+        .bubble {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: #3498db;
+            border-radius: 50%;
+            color: white;
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            bottom: 0;
+            transition: all 0.5s;
+        }
+        
+        .fun-fact {
+            background: #fff3cd;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Бульбашкове сортування (Bubble Sort)</h1>
+        
+        <div class="concept-box">
+            <h2>Основна ідея</h2>
+            <p>Бульбашкове сортування отримало свою назву через те, що менші елементи "спливають" до початку масиву, як бульбашки у воді. Алгоритм працює за простим принципом:</p>
+            <ol>
+                <li>Порівнюємо кожну пару сусідніх елементів</li>
+                <li>Якщо вони в неправильному порядку - міняємо їх місцями</li>
+                <li>Повторюємо процес, доки масив не буде повністю відсортований</li>
+            </ol>
+        </div>
+        
+        <h2>Чому "бульбашкове"?</h2>
+        
+        <div class="fun-fact">
+            <p>🫧 Уявіть склянку з газованою водою. Великі бульбашки швидко піднімаються вгору, а маленькі - повільніше. Так само в алгоритмі великі числа "спливають" до кінця масиву!</p>
+        </div>
+        
+        <h2>Як працює алгоритм?</h2>
+        
+        <div class="visual-demo">
+            <h3>Візуальна демонстрація</h3>
+            <p>Початковий масив:</p>
+            <div>
+                <span class="array-element">5</span>
+                <span class="array-element">3</span>
+                <span class="array-element">8</span>
+                <span class="array-element">1</span>
+            </div>
+            
+            <div class="step-explanation">
+                <strong>Прохід 1:</strong> Найбільший елемент "спливає" в кінець
+            </div>
+            
+            <div style="margin-top: 10px;">
+                <span class="array-element comparing">5</span>
+                <span class="array-element comparing">3</span>
+                <span class="array-element">8</span>
+                <span class="array-element">1</span>
+            </div>
+            
+            <p>5 > 3? Так → міняємо місцями</p>
+            
+            <div style="margin-top: 10px;">
+                <span class="array-element">3</span>
+                <span class="array-element comparing">5</span>
+                <span class="array-element comparing">8</span>
+                <span class="array-element">1</span>
+            </div>
+            
+            <p>5 > 8? Ні → залишаємо як є</p>
+            
+            <div style="margin-top: 10px;">
+                <span class="array-element">3</span>
+                <span class="array-element">5</span>
+                <span class="array-element comparing">8</span>
+                <span class="array-element comparing">1</span>
+            </div>
+            
+            <p>8 > 1? Так → міняємо місцями</p>
+            
+            <div style="margin-top: 10px;">
+                <span class="array-element">3</span>
+                <span class="array-element">5</span>
+                <span class="array-element">1</span>
+                <span class="array-element sorted">8</span>
+            </div>
+            
+            <p>Після першого проходу найбільший елемент (8) на своєму місці!</p>
+        </div>
+        
+        <h2>Реалізація на Python</h2>
+        
+        <h3>Базова версія</h3>
+        <pre><code>def bubble_sort(arr):
+    n = len(arr)
+    
+    # Проходимо по масиву n-1 разів
+    for i in range(n):
+        # Останні i елементів вже на своїх місцях
+        for j in range(0, n - i - 1):
+            # Порівнюємо сусідні елементи
+            if arr[j] > arr[j + 1]:
+                # Міняємо місцями, якщо вони в неправильному порядку
+                arr[j], arr[j + 1] = arr[j + 1], arr[j]
+    
+    return arr
+
+# Приклад використання
+numbers = [64, 34, 25, 12, 22, 11, 90]
+print("До сортування:", numbers)
+bubble_sort(numbers)
+print("Після сортування:", numbers)</code></pre>
+        
+        <h3>Оптимізована версія</h3>
+        <pre><code>def bubble_sort_optimized(arr):
+    n = len(arr)
+    
+    for i in range(n):
+        # Прапорець для виявлення, чи були обміни
+        swapped = False
+        
+        for j in range(0, n - i - 1):
+            if arr[j] > arr[j + 1]:
+                arr[j], arr[
